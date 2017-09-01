@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+begin
+  require_relative '../lib/polymath' if File.exist?(File.join(File.dirname(__FILE__), '../lib/polymath.rb'))
+rescue LoadError
+  require 'polymath'
+end
+
+unless defined? Polymath
+  puts "cant find polymath library" 
+  exit 
+end
+
+options = Polymath.parse_options(ARGV)
+Polymath.command_line(options)
