@@ -1,7 +1,7 @@
 require 'optparse'
 
 require_relative 'polymath/polynomial'
-require_relative 'polymath/math_steps'
+require_relative 'polymath/math/math_steps'
 
 module Polymath
   self::Version = [1, 0, 0]
@@ -102,4 +102,3 @@ module Polymath
   end
 
 end
-

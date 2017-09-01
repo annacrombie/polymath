@@ -1,12 +1,11 @@
 module Polymath
-  
   ##
   ## @brief      Class for a single step.
   ##
   class Step
 
     attr_accessor :title, :result
-    
+
     ##
     ## @brief      Constructs a new step
     ##

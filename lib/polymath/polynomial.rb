@@ -1,5 +1,5 @@
 require_relative 'token'
-require_relative 'steps'
+require_relative 'steps/steps'
 
 module Polymath
 
@@ -68,7 +68,7 @@ module Polymath
       if variables.length == 0
         "x"
       else
-        variables.uniq.map { |char| 
+        variables.uniq.map { |char|
           {
             count: variables.count(char),
             char:  char
@@ -137,13 +137,13 @@ module Polymath
     ##
     def cleanup!
       substep = @steps.add_group("cleanup")
-      
+
       homogenize!
       substep.add({title: "homogenize", result: to_s})
-      
+
       @tokens = collect_terms
       substep.add({title: "collect",    result: to_s})
-      
+
       @tokens = order
       substep.add({title: "order",      result: to_s})
     end
@@ -207,7 +207,7 @@ module Polymath
     end
 
     def reduce
-      
+
     end
 
     ##
@@ -272,7 +272,7 @@ module Polymath
     ## @return     a string
     ##
     def to_s
-      tokens.collect { |token| token.to_s }.reduce { |m, t| 
+      tokens.collect { |token| token.to_s }.reduce { |m, t|
         joiner = t[0] == "-" ? "" : "+"
         m += joiner + t
       }

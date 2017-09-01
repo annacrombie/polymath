@@ -1,5 +1,5 @@
 require 'prime'
-require_relative 'steps'
+require_relative '../steps/steps'
 
 module Polymath
 
@@ -17,7 +17,7 @@ module Polymath
       _q = factors_of polynomial.leading_coefficient
 
       _p.map { |x|
-        _q.map { |y| 
+        _q.map { |y|
           [ Rational(x, y), -Rational(x, y) ]
         }
       }.flatten.uniq
