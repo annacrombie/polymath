@@ -7,8 +7,8 @@ rescue LoadError
 end
 
 unless defined? Polymath
-  puts "cant find polymath library" 
-  exit 
+  puts "cant find polymath library"
+  exit
 end
 
 options = Polymath.parse_options(ARGV)

@@ -1,6 +1,7 @@
 require 'optparse'
+require 'json'
 
-require_relative 'polymath/polynomial'
+require_relative 'polymath/nomial/polynomial'
 require_relative 'polymath/math/math_steps'
 
 module Polymath
@@ -48,9 +49,9 @@ module Polymath
 
       opts.on("-r", "--random [N]", "generate a random polynomial") { |n|
         options[:polynomial] =  if n
-                                  random_polynomial(Integer(n))
+                                  Nomial::random_polynomial(Integer(n))
                                 else
-                                  random_polynomial
+                                  Nomial::random_polynomial
                                 end
       }
 
@@ -80,24 +81,31 @@ module Polymath
   def self.command_line(options)
     raise "No polynomial given" unless options[:polynomial]
 
-    polynomial = Polymath::Polynomial.new(options[:polynomial])
+    polynomial = Polymath::Nomial::Polynomial.new(options[:polynomial])
 
     case options[:record]
     when :none
-      zeroes = Polymath::Math.factor_zeroes(polynomial) if options[:factor]
+      zeroes = Polymath::Math.factor_rational_zeroes(polynomial) if options[:factor]
     else
       steps = polynomial.steps
       if options[:factor]
         math_steps = Polymath::Math::MathSteps.new
-        zeroes = math_steps.factor_zeroes(polynomial)
+        zeroes = math_steps.factor_rational_zeroes(polynomial)
         steps = polynomial.steps.merge(math_steps.steps)
       end
     end
 
     puts "#{polynomial}" unless options[:quiet]
-    puts polynomial.analyze if options[:analyze]
-    puts steps if options[:record] == :human
-    puts steps if options[:record] == :json
+    if options[:analyze]
+      puts "deg: #{polynomial.deg}"
+      puts "class: #{polynomial.classification.map { |t, c| c }.compact.join(" ")}"
+    end
+    case options[:record]
+    when :human
+      puts steps
+    when :json
+      puts JSON.pretty_generate(steps.to_h)
+    end
     puts "zeroes: #{zeroes}" if options[:factor]
   end
 

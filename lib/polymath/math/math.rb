@@ -44,6 +44,7 @@ module Polymath
     ## @return     an array of Rational numbers
     ##
     def self.factor_rational_zeroes(polynomial)
+      return Float::INFINITY if polynomial.classification[:special] == :zero
       rational_zeroes(polynomial).select { |tv|
         is_a_zero?(polynomial, tv)
       }

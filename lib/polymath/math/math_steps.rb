@@ -16,7 +16,7 @@ module Polymath
       ## @return     a new MathSteps object
       ##
       def initialize
-        @steps = Polymath::Steps.new("factor")
+        @steps = Polymath::Steps::Steps.new("factor")
       end
 
       ##
@@ -26,11 +26,11 @@ module Polymath
       ##
       ## @return     an array of Rational numbers that are roots of the polynomial
       ##
-      def factor_zeroes(polynomial)
+      def factor_rational_zeroes(polynomial)
 
         _p = Math::factors_of polynomial.constant
         _q = Math::factors_of polynomial.leading_coefficient
-        
+
         substeps = steps.add_group("factor_coefficients")
         substeps.add({title: "factor_constant", result: _p})
         substeps.add({title: "factor_coefficient", result: _q})
@@ -46,7 +46,7 @@ module Polymath
           is_z = rem == 0
 
           subsubsteps.add({
-            title: "synthetic_division", 
+            title: "synthetic_division",
             result: {
               test_value: tv,
               remainder:  rem,
@@ -57,15 +57,15 @@ module Polymath
         }
       end
 
-      def intelli_factor(polynomial)
+      def factor(polynomial)
         cls = polynomial.classification
 
-        if cls[:spc] == :zero
+        if cls[:special] == :zero
           raise "Infinitely many roots"
-        elsif cls[:spc] == :constant
+        elsif cls[:special] == :constant
           [Rational(0)]
         else
-          factor_zeroes(polynomial)
+          factor_rational_zeroes(polynomial)
         end
       end
     end
