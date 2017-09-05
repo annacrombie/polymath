@@ -27,46 +27,39 @@ module Polymath
       ## @return     an array of Rational numbers that are roots of the polynomial
       ##
       def factor_rational_zeroes(polynomial)
+        Math.factor_special(polynomial) {
+          _p = Math::factors_of polynomial.constant
+          _q = Math::factors_of polynomial.leading_coefficient
 
-        _p = Math::factors_of polynomial.constant
-        _q = Math::factors_of polynomial.leading_coefficient
+          substeps = steps.add_group("factor_coefficients")
+          substeps.add({title: "factor_constant", result: _p})
+          substeps.add({title: "factor_coefficient", result: _q})
 
-        substeps = steps.add_group("factor_coefficients")
-        substeps.add({title: "factor_constant", result: _p})
-        substeps.add({title: "factor_coefficient", result: _q})
+          substeps = steps.add_group("check_zeroes")
 
-        substeps = steps.add_group("check_zeroes")
+          rz = Math::rational_zeroes(polynomial)
+          substeps.add({title: "rational_zeroes", result: rz})
 
-        rz = Math::rational_zeroes(polynomial)
-        substeps.add({title: "rational_zeroes", result: rz})
+          subsubsteps = substeps.add_group("test_zeroes")
+          rz.select { |tv|
+            rem  = Math::synthetic_remainder(polynomial, tv)
+            is_z = rem == 0
 
-        subsubsteps = substeps.add_group("test_zeroes")
-        rz.select { |tv|
-          rem  = Math::synthetic_remainder(polynomial, tv)
-          is_z = rem == 0
-
-          subsubsteps.add({
-            title: "synthetic_division",
-            result: {
-              test_value: tv,
-              remainder:  rem,
-              is_a_zero:  is_z
-            }
-          })
-          is_z
+            subsubsteps.add({
+              title: "synthetic_division",
+              result: {
+                test_value: tv,
+                remainder:  rem,
+                is_a_zero:  is_z
+              }
+            })
+            is_z
+          }
         }
       end
 
       def factor(polynomial)
-        cls = polynomial.classification
-
-        if cls[:special] == :zero
-          raise "Infinitely many roots"
-        elsif cls[:special] == :constant
-          [Rational(0)]
-        else
-          factor_rational_zeroes(polynomial)
-        end
+        factor_rational_zeroes(polynomial)
       end
     end
   end

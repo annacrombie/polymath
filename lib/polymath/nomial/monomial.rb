@@ -4,7 +4,7 @@ module Polymath
 
       attr_accessor :cof, :deg, :var
 
-      ::PlaceholderVar = "_"
+      ::PlaceholderVar = "x"
 
       def initialize(cof:1, deg:0, var: ::PlaceholderVar)
         @cof, @deg, @var = cof, deg, var
@@ -21,6 +21,22 @@ module Polymath
         @deg += other.deg if other.deg
         @var = other.var  if other.var != ::PlaceholderVar
         self
+      end
+
+      def gcd(other)
+        Monomial.new(
+          cof: cof.gcd(other.cof),
+          deg: [deg, other.deg].min,
+          var: var
+        )
+      end
+
+      def /(other)
+        Monomial.new(
+          cof: cof / other.cof,
+          deg: deg - other.deg,
+          var: var
+        )
       end
 
       def +(other)

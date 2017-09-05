@@ -9,8 +9,10 @@ module Polymath
       (0..degree).map { |deg|
         if Random.rand <= 1.0 - skip_chance
           "#{Integer(Random.rand * cof_max) - (cof_max / 2)}x^#{deg}"
+        else
+          "0"
         end
-      }.compact.join("+")
+      }.compact.shuffle.join("+")
     end
 
     ##
@@ -41,6 +43,7 @@ module Polymath
         end
         @variable = Nomial::Parser.guess_variable(self)
         @interpreted_exp = @exp.gsub(/[[:alpha:]]/, @variable)
+        @gcd = Monomial.new(cof: 1, var: @variable)
         cleanup!
       end
 
@@ -105,6 +108,9 @@ module Polymath
 
         @monomials = collect_terms
         substep.add({title: "collect",    result: to_s})
+
+        @monomials = factor_gcd
+        substep.add({title: "factor_gcd", result: to_s})
       end
 
       ##
@@ -157,16 +163,19 @@ module Polymath
       end
 
       ##
-      ## @brief      determines the gcd of the polynomial's coefficients
+      ## @brief      facotrs the gcd out of the polynomial
       ##
-      ## @return     an integer
+      ## @return     nil
       ##
-      def gcd
-        coefficients.sort.reduce(:gcd)
-      end
-
-      def reduce
-
+      def factor_gcd
+        cls = classification
+        if cls[:special] == :zero or cls[:len] == :monomial
+          return monomials
+        end
+        @gcd = monomials.reduce(:gcd)
+        monomials.map { |monomial|
+          monomial / @gcd
+        }
       end
 
       ##
@@ -220,10 +229,15 @@ module Polymath
       ## @return     a string
       ##
       def to_s
-        monomials.collect { |monomial| monomial.to_s }.reduce { |m, t|
+        expression = monomials.collect { |monomial| monomial.to_s }.reduce { |m, t|
           joiner = t[0] == "-" ? "" : "+"
           m += joiner + t
         }
+        if @gcd.cof == 1 and @gcd.deg == 0
+          expression
+        else
+          "#{@gcd}(#{expression})"
+        end
       end
     end
   end

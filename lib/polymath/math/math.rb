@@ -44,10 +44,29 @@ module Polymath
     ## @return     an array of Rational numbers
     ##
     def self.factor_rational_zeroes(polynomial)
-      return Float::INFINITY if polynomial.classification[:special] == :zero
-      rational_zeroes(polynomial).select { |tv|
-        is_a_zero?(polynomial, tv)
+      factor_special(polynomial) {
+        rational_zeroes(polynomial).select { |tv|
+          is_a_zero?(polynomial, tv)
+        }
       }
+    end
+
+    def self.factor_special(polynomial)
+      p_class = polynomial.classification
+      zero_root = Rational(0)
+      case p_class[:special]
+      when :zero
+        raise "Infinitely many roots"
+      when :constant
+        [zero_root]
+      when :normal
+        case p_class[:len]
+        when :monomial
+          [zero_root]
+        else
+          yield
+        end
+      end
     end
 
     ##
@@ -63,6 +82,15 @@ module Polymath
       polynomial.coefficients.reduce { |carry, next_cof|
         (carry * value) + next_cof
       }
+    end
+
+    ##
+    ## @brief      determines the gcd of an array of integers
+    ##
+    ## @return     an integer
+    ##
+    def self.gcd(arr)
+      arr.sort.reduce(:gcd)
     end
 
     ##

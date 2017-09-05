@@ -4,7 +4,6 @@ module Polymath
     class Parser
 
       def self.sanitize(exp)
-        p exp
         exp.gsub(/\s/, '')
       end
 
