@@ -2,64 +2,45 @@ require_relative 'math'
 
 module Polymath
   module Math
+    @__steps = Steps::Steps.new("math")
+    def self.step_wrap(*meths)
+      meths.each { |meth|
+        m = instance_method(meth)
+        define_method(meth) { |*args, &block|
+
+          #substep = yield(meth.to_s)
+
+          result  = m.bind(self).(*args, &block) #Steps.stepper(substep))
+
+          args.map! { |arg|
+            case arg
+            when Hash
+              arg.map { |t, v| [t, v.to_s]}.to_h
+            else
+              arg
+            end
+          }
+
+          yield({
+            title: meth.to_s,
+            data: {args: args, result: result}
+          })
+
+          result
+        }
+      }
+    end
+
+    step_wrap(*instance_methods, &Steps.stepper(@__steps))
+
     ##
     ## @brief      Class for mathematical operations that can keep track of its
     ##             computations
     ##
     class MathSteps
-
-      attr_accessor :steps
-
-      ##
-      ## @brief      constructs a new MathSteps object
-      ##
-      ## @return     a new MathSteps object
-      ##
-      def initialize
-        @steps = Polymath::Steps::Steps.new("factor")
-      end
-
-      ##
-      ## @brief      factors a polynomial, keeping track of its steps
-      ##
-      ## @param      polynomial  The polynomial to factor
-      ##
-      ## @return     an array of Rational numbers that are roots of the polynomial
-      ##
-      def factor_rational_zeroes(polynomial)
-        Math.factor_special(polynomial) {
-          _p = Math::factors_of polynomial.constant
-          _q = Math::factors_of polynomial.leading_coefficient
-
-          substeps = steps.add_group("factor_coefficients")
-          substeps.add({title: "factor_constant", result: _p})
-          substeps.add({title: "factor_coefficient", result: _q})
-
-          substeps = steps.add_group("check_zeroes")
-
-          rz = Math::rational_zeroes(polynomial)
-          substeps.add({title: "rational_zeroes", result: rz})
-
-          subsubsteps = substeps.add_group("test_zeroes")
-          rz.select { |tv|
-            rem  = Math::synthetic_remainder(polynomial, tv)
-            is_z = rem == 0
-
-            subsubsteps.add({
-              title: "synthetic_division",
-              result: {
-                test_value: tv,
-                remainder:  rem,
-                is_a_zero:  is_z
-              }
-            })
-            is_z
-          }
-        }
-      end
-
-      def factor(polynomial)
-        factor_rational_zeroes(polynomial)
+      include Math
+      def steps
+        Math.instance_variable_get(:@__steps)
       end
     end
   end

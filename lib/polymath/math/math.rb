@@ -5,6 +5,8 @@ module Polymath
 
   module Math
 
+    ::ZeroRoot = Rational(0)
+
     ##
     ## @brief      calculates possible rational zeroes for a given polynomial
     ##
@@ -12,14 +14,12 @@ module Polymath
     ##
     ## @return     an array of Rational numbers
     ##
-    def self.rational_zeroes(polynomial)
-      _p = factors_of polynomial.constant
-      _q = factors_of polynomial.leading_coefficient
+    def rational_zeroes(polynomial:)
+      cnf = factors_of(polynomial.constant)
+      lcf = factors_of(polynomial.leading_coefficient)
 
-      _p.map { |x|
-        _q.map { |y|
-          [ Rational(x, y), -Rational(x, y) ]
-        }
+      cnf.map { |x|
+        lcf.map { |y| [ Rational(x, y), -Rational(x, y) ] }
       }.flatten.uniq
     end
 
@@ -32,8 +32,8 @@ module Polymath
     ##
     ## @return     True if a zero, False otherwise.
     ##
-    def self.is_a_zero?(polynomial, test_value)
-      synthetic_remainder(polynomial, test_value) == 0
+    def is_a_zero?(test_value:, polynomial:)
+      synthetic_remainder(polynomial: polynomial, divisor: test_value) == 0
     end
 
     ##
@@ -43,29 +43,23 @@ module Polymath
     ##
     ## @return     an array of Rational numbers
     ##
-    def self.factor_rational_zeroes(polynomial)
-      factor_special(polynomial) {
-        rational_zeroes(polynomial).select { |tv|
-          is_a_zero?(polynomial, tv)
-        }
+    def factor_rational_zeroes(polynomial:)
+      rational_zeroes(polynomial: polynomial).select { |test_value|
+        is_a_zero?(test_value: test_value, polynomial: polynomial)
       }
     end
 
-    def self.factor_special(polynomial)
-      p_class = polynomial.classification
-      zero_root = Rational(0)
-      case p_class[:special]
-      when :zero
-        raise "Infinitely many roots"
-      when :constant
-        [zero_root]
-      when :normal
-        case p_class[:len]
-        when :monomial
-          [zero_root]
+    def factor_zeroes(polynomial:)
+      case polynomial.classification[:len]
+      when :monomial
+        case polynomial.classification[:special]
+        when :zero
+          [Float::INFINITY]
         else
-          yield
+          [::ZeroRoot]
         end
+      else
+        factor_rational_zeroes(polynomial: polynomial)
       end
     end
 
@@ -78,19 +72,10 @@ module Polymath
     ##
     ## @return     a Rational number
     ##
-    def self.synthetic_remainder(polynomial, value)
+    def synthetic_remainder(polynomial:, divisor:)
       polynomial.coefficients.reduce { |carry, next_cof|
-        (carry * value) + next_cof
+        (carry * divisor) + next_cof
       }
-    end
-
-    ##
-    ## @brief      determines the gcd of an array of integers
-    ##
-    ## @return     an integer
-    ##
-    def self.gcd(arr)
-      arr.sort.reduce(:gcd)
     end
 
     ##
@@ -100,10 +85,12 @@ module Polymath
     ##
     ## @return     an array of integers
     ##
-    def self.factors_of(x)
+    def factors_of(x)
       (x.prime_division.map { |f| f[0] } + [1, x]).uniq.sort
     end
 
+    class MathPlain
+      include Math
+    end
   end
-
 end

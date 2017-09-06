@@ -18,10 +18,10 @@ module Polymath
 
     options = {
       :polynomial => nil,
-      :factor => false,
-      :record => :none,
-      :analyze => false,
-      :quiet => false
+      :record     => :none,
+      :factor     => false,
+      :analyze    => false,
+      :verbose    => true
     }
 
     parser = OptionParser.new { |opts|
@@ -44,7 +44,7 @@ module Polymath
       }
 
       opts.on("-q", "--quiet", "only output what is specified") { |q|
-        options[:quiet] = q
+        options[:verbose] = ! q
       }
 
       opts.on("-r", "--random [N]", "generate a random polynomial") { |n|
@@ -83,30 +83,42 @@ module Polymath
 
     polynomial = Polymath::Nomial::Polynomial.new(options[:polynomial])
 
-    case options[:record]
-    when :none
-      zeroes = Polymath::Math.factor_rational_zeroes(polynomial) if options[:factor]
+    unless options[:record] == :none
+      steps   = Polymath::Steps::Steps.new("polynomial")
+      stepper = Polymath::Steps.stepper(steps)
+      math    = Polymath::Math::MathSteps.new
     else
-      steps = polynomial.steps
-      if options[:factor]
-        math_steps = Polymath::Math::MathSteps.new
-        zeroes = math_steps.factor_rational_zeroes(polynomial)
-        steps = polynomial.steps.merge(math_steps.steps)
-      end
+      stepper = nil
+      math    = Polymath::Math::MathPlain.new
     end
 
-    puts "#{polynomial}" unless options[:quiet]
-    if options[:analyze]
-      puts "deg: #{polynomial.deg}"
-      puts "class: #{polynomial.classification.map { |t, c| c }.compact.join(" ")}"
-    end
-    case options[:record]
-    when :human
-      puts steps
-    when :json
-      puts JSON.pretty_generate(steps.to_h)
-    end
-    puts "zeroes: #{zeroes}" if options[:factor]
+    polynomial.cleanup!(&stepper)
+
+    zeroes = math.factor_rational_zeroes(polynomial: polynomial) if options[:factor]
+
+    #output
+    puts options.map { |opt, value|
+      next unless value
+      case opt
+      when :record
+        case value
+        when :human
+          steps.merge(math.steps).to_s
+        when :json
+          JSON.pretty_generate(steps.merge(math.steps).to_h)
+        end
+      when :verbose
+        polynomial.to_s
+      when :factor
+        "zeroes: #{zeroes}" if options[:factor]
+      when :analyze
+        {
+          deg:   polynomial.deg,
+          class: polynomial.classification.map { |t, c| c }.compact.join(" ")
+        }.map { |a,b| "#{a}: #{b}" }.join("\n")
+      end
+    }.compact.join("\n")
+
   end
 
 end

@@ -20,10 +20,12 @@ module Polymath
     ##
     class Polynomial
 
-      attr_reader :exp, :monomials, :interpreted_exp, :steps
+      attr_reader :exp, :monomials, :homogenized_exp
       attr_accessor :variable
 
-      ::DefaultVar = "x"
+      ::DefaultVar   = "x"
+      ::ZeroMonomial = Monomial.new(cof: 0, var: ::DefaultVar)
+      ::UnitMonomial = Monomial.new(var: ::DefaultVar)
 
       ##
       ## @brief      Constructs a Polynomial object
@@ -33,18 +35,14 @@ module Polymath
       ## @return     a new Polynomial object
       ##
       def initialize(exp)
-        @steps = Polymath::Steps::Steps.new("polynomial")
-        @substep = nil
+        @exp             = Parser.sanitize(exp)
+        @monomials       = Parser.parse(@exp)
+        @monomials      << ::ZeroMonomial if @monomials.length == 0
 
-        @exp = Nomial::Parser.sanitize(exp)
-        @monomials = Nomial::Parser.parse(@exp)
-        if @monomials.length == 0
-          @monomials << Monomial.new(cof: 0, deg: 0, var: ::DefaultVar)
-        end
-        @variable = Nomial::Parser.guess_variable(self)
-        @interpreted_exp = @exp.gsub(/[[:alpha:]]/, @variable)
-        @gcd = Monomial.new(cof: 1, var: @variable)
-        cleanup!
+        @variable        = Parser.guess_variable(self)
+        @homogenized_exp = Parser.set_variable(exp, @variable)
+
+        @gcd             = ::UnitMonomial
       end
 
       ##
@@ -53,7 +51,7 @@ module Polymath
       ## @return     boolean
       ##
       def modified_expression?
-        interpreted_exp != exp
+        homogenized_exp != exp
       end
 
       ##
@@ -68,7 +66,7 @@ module Polymath
       ##
       ## @brief      orders a polynomial expression in descending order by degree
       ##
-      ## @return     an  array of monomials in descending order
+      ## @return     an array of monomials in descending order
       ##
       def order
         monomials.sort_by { |monomial| -monomial.deg }
@@ -85,11 +83,7 @@ module Polymath
           collected.cof == 0 ? nil : collected if collected
         }.compact.reverse
 
-        if c.empty?
-          [Monomial.new(cof: 0)]
-        else
-          c
-        end
+        c.empty? ? [::ZeroMonomial] : c
       end
 
       ##
@@ -97,20 +91,22 @@ module Polymath
       ##
       ## @return     nil
       ##
-      def cleanup!
-        substep = @steps.add_group("cleanup")
+      def cleanup!(&steps)
+        substep = yield("cleanup") if block_given?
+
+        substep << {title: "sanitize",   data: {result: @exp}} if substep
 
         homogenize!
-        substep.add({title: "homogenize", result: to_s})
+        substep << {title: "homogenize", data: {result: to_s}} if substep
 
         @monomials = order
-        substep.add({title: "order",      result: to_s})
+        substep << {title: "order",      data: {result: to_s}} if substep
 
         @monomials = collect_terms
-        substep.add({title: "collect",    result: to_s})
+        substep << {title: "collect",    data: {result: to_s}} if substep
 
         @monomials = factor_gcd
-        substep.add({title: "factor_gcd", result: to_s})
+        substep << {title: "factor_gcd", data: {result: to_s}} if substep
       end
 
       ##

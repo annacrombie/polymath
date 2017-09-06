@@ -6,7 +6,7 @@ module Polymath
     ##
     class Step
 
-      attr_accessor :title, :result
+      attr_accessor :title, :data
 
       ##
       ## @brief      Constructs a new step
@@ -16,9 +16,9 @@ module Polymath
       ##
       ## @return     a new step object
       ##
-      def initialize(title:, result:)
-        @title  = title
-        @result = result
+      def initialize(title:, data:)
+        @title = title
+        @data  = data
       end
 
     end

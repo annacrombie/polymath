@@ -4,12 +4,19 @@ module Polymath
 
   module Steps
 
+    def self.stepper(steps)
+      steps = Steps.new(steps) if steps.class == String
+      ->(step) { steps << step }
+    end
+
     ##
     ## @brief      Class for recording steps used in a computation
     ##
     class Steps
 
       attr_accessor :steps, :title
+
+      ::Tab = "  "
 
       ##
       ## @brief      constructor for a steps object
@@ -24,32 +31,27 @@ module Polymath
       end
 
       ##
-      ## @brief      add a new step to this group of steps
+      ## @brief      add a new step or group of steps to this group of steps
       ##
-      ## @param      opts  a hash containing a :title and a :result
+      ## @param      other the step, step title or step group
       ##
-      ## @return     an array of steps
+      ## @return     the added step
       ##
-      def add(opts)
-        @steps << Step.new(opts)
-      end
-
-      ##
-      ## @brief      Adds a group of steps
-      ##
-      ## @param      title  The title of the steps group or another steps object
-      ##
-      ## @return     a new steps object or string title
-      ##
-      def add_group(title)
-        if title.class == Steps
-          @steps << title
-          title
+      def <<(other)
+        #p self
+        #p @steps
+        #puts "adding #{other.class}"
+        case other
+        when Steps
+          @steps << other
+        when Hash
+          @steps << Step.new(other)
+        when String
+          @steps << Steps.new(other)
         else
-          new_group = Steps.new(title)
-          @steps << new_group
-          new_group
+          raise "Invalid class for Step #{other.class}"
         end
+        @steps.last
       end
 
       ##
@@ -62,8 +64,8 @@ module Polymath
       def merge(other)
         new_group = other
         new_steps = Steps.new(title + " " + other.title)
-        new_steps.add_group(self)
-        new_steps.add_group(other)
+        new_steps << self
+        new_steps << other
         new_steps
       end
 
@@ -75,11 +77,13 @@ module Polymath
       ## @return     a string
       ##
       def to_s(indent=0)
-        (" " * indent) + @title + "\n" + @steps.map { |step|
+        tab = (::Tab * indent)
+        tab + @title + "\n" + @steps.map { |step|
+
           if step.class == Steps
             step.to_s(indent+1)
           elsif step.class == Step
-            "#{"  " * indent}#{step.title} -> #{step.result}\n"
+            "#{tab}#{step.title}\n#{tab}#{::Tab}#{step.data}\n"
           end
         }.join
       end
@@ -95,7 +99,7 @@ module Polymath
             if step.class == Steps
               step.to_h
             elsif step.class == Step
-              {title: step.title, result: step.result}
+              {title: step.title, data: step.data}
             end
           }
         }

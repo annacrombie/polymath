@@ -3,7 +3,17 @@ module Polymath
   module Nomial
     class Parser
 
+      ::AllowedCharacters = / [[:alnum:]] | \^ | \s | \+ | \- /x
+
       def self.sanitize(exp)
+        exp.gsub(/(?!#{AllowedCharacters})./, '')
+      end
+
+      def self.set_variable(exp, variable)
+        exp.gsub(/[[:alpha:]]/, variable)
+      end
+
+      def self.strip(exp)
         exp.gsub(/\s/, '')
       end
 
@@ -15,7 +25,7 @@ module Polymath
       ## @return     an array of monomials
       ##
       def self.parse(exp)
-        exp.split(/\+|(?=-)/).map { |monomial|
+        self.strip(exp).split(/\+|(?=-)/).map { |monomial|
           monomial.split(/(?=[[:alpha:]])/).map { |token|
             if /[[:alpha:]]/.match?(token)
               Monomial.new(
