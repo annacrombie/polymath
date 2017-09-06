@@ -5,8 +5,9 @@ module Polymath
   module Steps
 
     def self.stepper(steps)
+      puts "creating new stepper with steps.#{steps.id} == #{steps.class}"
       steps = Steps.new(steps) if steps.class == String
-      ->(step) { steps << step }
+      ->(step){ puts "adding #{step.class} to steps.#{steps.id}"; steps << step }
     end
 
     ##
@@ -14,7 +15,7 @@ module Polymath
     ##
     class Steps
 
-      attr_accessor :steps, :title
+      attr_accessor :steps, :title, :id
 
       ::Tab = "  "
 
@@ -28,6 +29,7 @@ module Polymath
       def initialize(title)
         @title = title
         @steps = []
+        @id = Integer(Random.rand() * 1000)
       end
 
       ##
@@ -38,9 +40,9 @@ module Polymath
       ## @return     the added step
       ##
       def <<(other)
-        #p self
+        caller
         #p @steps
-        #puts "adding #{other.class}"
+        puts "adding #{other.class}"
         case other
         when Steps
           @steps << other
