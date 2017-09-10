@@ -2,10 +2,10 @@ require 'optparse'
 require 'json'
 
 require_relative 'polymath/nomial/polynomial'
-require_relative 'polymath/math/math_steps'
+require_relative 'polymath/math/math'
 
 module Polymath
-  self::Version = [1, 0, 0]
+  ::Version = [1, 0, 0]
 
   ##
   ## @brief      parses command line arguments
@@ -18,10 +18,9 @@ module Polymath
 
     options = {
       :polynomial => nil,
-      :record     => :none,
-      :factor     => false,
+      :verbose    => true,
       :analyze    => false,
-      :verbose    => true
+      :factor     => false
     }
 
     parser = OptionParser.new { |opts|
@@ -33,14 +32,6 @@ module Polymath
 
       opts.on("-a", "--analyze", "analyze the polynomial expression") { |a|
         options[:analyze] = a
-      }
-
-      opts.on("--json", "output json steps") {
-        options[:record] = :json
-      }
-
-      opts.on("--steps", "output human readable steps") {
-        options[:record] = :human
       }
 
       opts.on("-q", "--quiet", "only output what is specified") { |q|
@@ -71,6 +62,10 @@ module Polymath
     options
   end
 
+  def self.polynomial(exp)
+    Polymath::Nomial::Polynomial.new(exp)
+  end
+
   ##
   ## @brief      preforms actions specified by command line arguments
   ##
@@ -81,32 +76,19 @@ module Polymath
   def self.command_line(options)
     raise "No polynomial given" unless options[:polynomial]
 
-    polynomial = Polymath::Nomial::Polynomial.new(options[:polynomial])
+    polynomial = Polymath.polynomial(options[:polynomial])
+    math       = Polymath::Math.new
 
-    unless options[:record] == :none
-      steps   = Polymath::Steps::Steps.new("polynomial")
-      stepper = Polymath::Steps.stepper(steps)
-      math    = Polymath::Math::MathSteps.new
-    else
-      stepper = nil
-      math    = Polymath::Math::MathPlain.new
+    polynomial.cleanup!
+
+    if options[:factor]
+      zeroes = math.factor_rational_zeroes(polynomial: polynomial)
     end
-
-    polynomial.cleanup!(&stepper)
-
-    zeroes = math.factor_rational_zeroes(polynomial: polynomial) if options[:factor]
 
     #output
     puts options.map { |opt, value|
       next unless value
       case opt
-      when :record
-        case value
-        when :human
-          steps.merge(math.steps).to_s
-        when :json
-          JSON.pretty_generate(steps.merge(math.steps).to_h)
-        end
       when :verbose
         polynomial.to_s
       when :factor

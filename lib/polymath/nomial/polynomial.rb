@@ -1,6 +1,5 @@
 require_relative 'monomial'
 require_relative 'parser'
-require_relative '../steps/steps'
 
 module Polymath
   module Nomial
@@ -91,22 +90,14 @@ module Polymath
       ##
       ## @return     nil
       ##
-      def cleanup!(&steps)
-        substep = yield("cleanup") if block_given?
-
-        substep << {title: "sanitize",   data: {result: @exp}} if substep
-
+      def cleanup!
         homogenize!
-        substep << {title: "homogenize", data: {result: to_s}} if substep
 
         @monomials = order
-        substep << {title: "order",      data: {result: to_s}} if substep
 
         @monomials = collect_terms
-        substep << {title: "collect",    data: {result: to_s}} if substep
 
         @monomials = factor_gcd
-        substep << {title: "factor_gcd", data: {result: to_s}} if substep
       end
 
       ##

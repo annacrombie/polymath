@@ -1,9 +1,8 @@
 require 'prime'
-require_relative '../steps/steps'
 
 module Polymath
 
-  module Math
+  class Math
 
     ::ZeroRoot = Rational(0)
 
@@ -89,8 +88,5 @@ module Polymath
       (x.prime_division.map { |f| f[0] } + [1, x]).uniq.sort
     end
 
-    class MathPlain
-      include Math
-    end
   end
 end
